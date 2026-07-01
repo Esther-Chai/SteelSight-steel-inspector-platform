@@ -15,7 +15,10 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173",
+        "https://steel-sight-steel-inspector-platfor.vercel.app",  # ← add after Vercel deploy
+    ],
     allow_methods=["*"],
     allow_headers=["*"],
 )
