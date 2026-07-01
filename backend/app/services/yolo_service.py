@@ -2,13 +2,18 @@ import time
 import base64
 import numpy as np
 import cv2
-from PIL import Image
-from io import BytesIO
 from ultralytics import YOLO
 from app.core.config import settings
 from app.models.schemas import DetectionResult
 
-model = YOLO(settings.MODEL_PATH)
+# Lazy load — model loads on first request, not at startup
+_model = None
+
+def get_model():
+    global _model
+    if _model is None:
+        _model = YOLO(settings.MODEL_PATH)
+    return _model
 
 LOCATION_MAP = {
     (0, 0): "Upper-left",   (1, 0): "Upper-centre",  (2, 0): "Upper-right",
@@ -26,6 +31,7 @@ def encode_image(img_bgr: np.ndarray) -> str:
     return base64.b64encode(buffer).decode('utf-8')
 
 def run_inference(image_bytes: bytes, conf_threshold: float = 0.35) -> dict:
+    model     = get_model()
     img_array = np.frombuffer(image_bytes, np.uint8)
     img_bgr   = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
     h, w      = img_bgr.shape[:2]

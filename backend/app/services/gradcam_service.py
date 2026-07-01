@@ -17,11 +17,18 @@ class YOLOBackboneWrapper(nn.Module):
     def forward(self, x):
         return self.backbone(x)
 
-# Load once at startup
-_yolo          = YOLO(settings.MODEL_PATH)
-_wrapper       = YOLOBackboneWrapper(_yolo)
-_wrapper.eval()
-_target_layers = [list(_wrapper.backbone.children())[-1]]
+# Lazy load
+_wrapper       = None
+_target_layers = None
+
+def get_cam_model():
+    global _wrapper, _target_layers
+    if _wrapper is None:
+        yolo           = YOLO(settings.MODEL_PATH)
+        _wrapper       = YOLOBackboneWrapper(yolo)
+        _wrapper.eval()
+        _target_layers = [list(_wrapper.backbone.children())[-1]]
+    return _wrapper, _target_layers
 
 _transform = transforms.Compose([
     transforms.ToTensor(),
@@ -29,17 +36,19 @@ _transform = transforms.Compose([
 ])
 
 def run_gradcam(image_bytes: bytes) -> str:
+    wrapper, target_layers = get_cam_model()
+
     img_array = np.frombuffer(image_bytes, np.uint8)
     img_bgr   = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
     img_rgb   = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
     img_r     = cv2.resize(img_rgb, (640, 640)).astype(np.float32) / 255.0
 
     tensor = _transform(img_r).unsqueeze(0)
-    cam    = EigenCAM(model=_wrapper, target_layers=_target_layers)
+    cam    = EigenCAM(model=wrapper, target_layers=target_layers)
     mask   = cam(input_tensor=tensor)[0]
     mask   = cv2.resize(mask, (640, 640))
 
-    overlay   = show_cam_on_image(img_r, mask, use_rgb=True)
+    overlay     = show_cam_on_image(img_r, mask, use_rgb=True)
     overlay_bgr = cv2.cvtColor(overlay, cv2.COLOR_RGB2BGR)
 
     _, buffer = cv2.imencode('.jpg', overlay_bgr)
