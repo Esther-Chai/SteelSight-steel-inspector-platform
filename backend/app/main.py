@@ -1,24 +1,19 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import HTTPBearer
 from app.routers import auth, predict, report
 from app.db.database import Base, engine
 
 Base.metadata.create_all(bind=engine)
 
-security = HTTPBearer()
-
-app = FastAPI(
-    title="SteelSight API",
-    version="1.0.0",
-)
+app = FastAPI(title="SteelSight API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "https://steel-sight-steel-inspector-platfor.vercel.app",  # ← add after Vercel deploy
+        "https://steelsight-steel-inspector-platform.vercel.app",  # ← your Vercel URL
     ],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
