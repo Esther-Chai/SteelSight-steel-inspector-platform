@@ -17,3 +17,7 @@ dist/
 # Misc
 .DS_Store
 mlruns/
+
+# Allow model weights
+!weights/
+!weights/best.pt
