@@ -5,10 +5,6 @@ __pycache__/
 venv/
 *.egg-info/
 
-# Model weights
-*.pt
-*.onnx
-
 # Node
 node_modules/
 dist/
@@ -17,7 +13,4 @@ dist/
 # Misc
 .DS_Store
 mlruns/
-
-# Allow model weights
-!weights/
-!weights/best.pt
+*.onnx
